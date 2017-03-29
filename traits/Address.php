@@ -5,17 +5,17 @@ trait Address
     private $address;
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getAddress()
+    public function getAddress() : string
     {
         return $this->address;
     }
 
     /**
-     * @param mixed $address
+     * @param string $address
      */
-    public function setAddress($address)
+    public function setAddress(string $address)
     {
         $this->address = $address;
     }
