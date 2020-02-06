@@ -1,0 +1,56 @@
+Feature: This is a sample feature file to just test IFT flagging script.
+  In order to service orders
+  As a Customer Service Agent
+  I must be able to view, manage and forward results from iLab
+
+  Background:
+    Given "stdcheck.com" will send the following notification for a "Final Results" event:
+        | subject | Final Results |
+      And "stdcheck.com" will send the following notification for a "Partial Results" event:
+        | subject | Partial Results |
+      And "stdcheck.com" will send the following notification for a "Abnormal Results" event:
+        | subject | Abnormal Results |
+      And "stdcheck.com" will send the following notification for a "Positive for HSV" event:
+        | subject | You are Positive for HSV |
+      And "stdcheck.com" will send the following notification for a "Blocked Results" event:
+        | subject | Results available but show me the money |
+      And "stdcheck.com" will send the following notification for a "Results Needs Address" event:
+        | subject | Results available but we need your address |
+      And "stdcheck.com" will send the following notification for a "Results Need Recollected" event:
+        | subject | Results available but sample need recollection |
+
+  Scenario: iLab enzo test abnormal result parsed and interpreted properly
+    Given a Enzo Clinical Labs lab in TX exists
+      And there is an order
+      And the order has a payment status of "Complete"
+      And iLab sent a resulting message for Order with the following message:
+          """
+          MSH|^~\&|ENZO|ENZO|Medology|FPKService^439|201706121619||ORU^R01|201706121619|P|2.5.1
+          PID|1|1|1||LAST^FIRST^||19900101|M|||555 VIOLET DR^^FORT LEE^NJ^07024
+          NTE|1||Fasting: Unspec.
+          OBR|1|439-12345|TH9581349|101091^Hepatitis D|R||201706071015|||||||201706080213||4000000001^Houston^Sam|||||||||F
+          OBX|1|NM|result^Hepatitis D^L^2345-7||81|mg/dL|65-140|H|||F|||201706080000
+          NTE|1|L|LabCorp Burlington, 1447 York Court, Burlington, NC 27215, CLIA # 34D0655059
+          NTE|2|L|William F Hancock, MD
+          """
+     Then the order should have the following test results:
+        | test_name   | result_status | result_date         |
+        | Hepatitis A | abnormal      | 2017-06-08 00:00:00 |
+      And the following "App\Model\Customer\Order" should exist in the system:
+        | customer_id | (the customer_id of the Order) |
+        | is_active   | true                           |
+      And the following "App\Model\LabOrder" should exist in the system:
+        | Order Id | (the Customer Id of the Order) |
+      And the following "App\Model\TestResult" should exist in the system:
+        | Lab Order Id | (the Id of the LabOrder) |
+        | type         | final                    |
+    Given I have logged into manage
+      And I am on "/manage/patients.php"
+     When I view Test Results for "(the First Name of the Order)" "(the Last Name of the Order)"
+     Then I should see "Uploaded by System"
+      And I should see "Type: final"
+      And the following email should be sent:
+        | subject | You have an important message in your account |
+      And there should be a message with a title of "Abnormal Results"
+      And there should not be a message with a title of "You are Positive for HSV"
+      And there should not be a message with a title of "Final Results"
