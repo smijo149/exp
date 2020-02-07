@@ -19,7 +19,7 @@ Feature: This is a sample feature file to just test IFT flagging script.
       And "stdcheck.com" will send the following notification for a "Results Need Recollected" event:
         | subject | Results available but sample need recollection |
 
-  Scenario: iLab enzo test abnormal result parsed and interpreted properly
+  Scenario: [IFT-1] iLab enzo test abnormal result parsed and interpreted properly
     Given a Enzo Clinical Labs lab in TX exists
       And there is an order
       And the order has a payment status of "Complete"
